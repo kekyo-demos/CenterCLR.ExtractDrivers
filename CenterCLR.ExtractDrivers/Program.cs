@@ -62,10 +62,11 @@ namespace CenterCLR.ExtractDrivers
 			}
 		}
 
-		private static readonly string[] empty_ = new string[0];
-		private static string[] GetFilePaths(Dictionary<string, string[]> filesIndex, string fileName)
+		private static readonly FileInfo[] empty_ = new FileInfo[0];
+
+		private static FileInfo[] GetFilePaths(Dictionary<string, FileInfo[]> filesIndex, string fileName)
 		{
-			string[] filePaths;
+			FileInfo[] filePaths;
 			if (filesIndex.TryGetValue(fileName, out filePaths) == true)
 			{
 				return filePaths;
@@ -74,7 +75,19 @@ namespace CenterCLR.ExtractDrivers
 			return empty_;
 		}
 
-		private static async Task ExtractDriverFilesAsync(string infPath, string outputFolder, Dictionary<string, string[]> filesIndex, TextWriter outputMessage)
+		private static async Task CopyFileAsync(string sourcePath, string destinationPath)
+		{
+			using (var sourceStream = new FileStream(sourcePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 65536, FileOptions.SequentialScan | FileOptions.Asynchronous))
+			{
+				using (var destinationStream = new FileStream(destinationPath, FileMode.Create, FileAccess.ReadWrite, FileShare.None, 65536, FileOptions.SequentialScan | FileOptions.Asynchronous))
+				{
+					await sourceStream.CopyToAsync(destinationStream);
+					await destinationStream.FlushAsync();
+				}
+			}
+		}
+
+		private static async Task ExtractDriverFilesAsync(string infPath, string outputFolder, Dictionary<string, FileInfo[]> filesIndex, TextWriter outputMessage)
 		{
 			await outputMessage.WriteLineAsync(string.Format("InfFile = {0}", infPath)).ConfigureAwait(false);
 
@@ -97,11 +110,54 @@ namespace CenterCLR.ExtractDrivers
 				from driverFilePath in GetFilePaths(filesIndex, entry.Key)
 				select driverFilePath;
 
-			var targetPaths = new[] { infPath }.Concat(catalogFilePaths.Concat(sourceDisksFilePaths).Distinct().ToList());
+			var targetPaths = new[] { new FileInfo(infPath) }.Concat(catalogFilePaths.Concat(sourceDisksFilePaths).Distinct().ToList());
 			var infFileName = Path.GetFileNameWithoutExtension(infPath);
 
-			await Task.WhenAll(targetPaths.Select(targetPath =>
-				Task.Run(() => File.Copy(targetPath, Path.Combine(outputFolder, Path.GetFileName(targetPath)), true))));
+			var storeFolder = Path.Combine(outputFolder, infFileName);
+			if (Directory.Exists(storeFolder) == false)
+			{
+				Directory.CreateDirectory(storeFolder);
+			}
+
+			await Task.WhenAll(
+				targetPaths.Select(targetPath =>
+					CopyFileAsync(targetPath.FullName, Path.Combine(storeFolder, targetPath.Name))));
+		}
+
+		private static IEnumerable<FileInfo> Traverse(DirectoryInfo folder)
+		{
+			IEnumerable<DirectoryInfo> subFolders = Enumerable.Empty<DirectoryInfo>();
+			try
+			{
+				subFolders = folder.GetDirectories("*.*", SearchOption.TopDirectoryOnly);
+			}
+			catch (UnauthorizedAccessException)
+			{
+				// ignore.
+			}
+
+			foreach (var folderInfo in subFolders)
+			{
+				foreach (var fileInfo in Traverse(folderInfo))
+				{
+					yield return fileInfo;
+				}
+			}
+
+			IEnumerable<FileInfo> files = Enumerable.Empty<FileInfo>();
+			try
+			{
+				files = folder.GetFiles("*.*", SearchOption.TopDirectoryOnly);
+			}
+			catch (UnauthorizedAccessException)
+			{
+				// ignore.
+			}
+
+			foreach (var fileInfo in files)
+			{
+				yield return fileInfo;
+			}
 		}
 
 		static void Main(string[] args)
@@ -109,12 +165,14 @@ namespace CenterCLR.ExtractDrivers
 			var windowsPath = @"C:\Windows";
 			var searchPattern = @"oem*.inf";
 			var driverBaseFolder = @"System32";
-			var outputFolder = ".";
+			var outputFolder = "Store";
+
+			var folderInfo = new DirectoryInfo(Path.Combine(windowsPath, driverBaseFolder));
 
 			var filesIndex =
-				Directory.EnumerateFiles(Path.Combine(windowsPath, driverBaseFolder), "*.*", SearchOption.AllDirectories).
+				Traverse(folderInfo).
 				AsParallel().
-				GroupBy(path => Path.GetFileName(path)).
+				GroupBy(fileInfo => fileInfo.Name).
 				ToDictionary(g => g.Key, g => g.ToArray());
 
 			Task.WhenAll(
