@@ -98,7 +98,9 @@ namespace CenterCLR.ExtractDrivers
 				select driverFilePath;
 
 			var targetPaths = new[] { infPath }.Concat(catalogFilePaths.Concat(sourceDisksFilePaths).Distinct().ToList());
-			var infFileName = Path.GetFileNameWithoutExtension(infPath);
+
+			var infFileName = catalogFilePaths.FirstOrDefault() ?? infPath;
+			infFileName = Path.GetFileNameWithoutExtension(infFileName);
 
 			await Task.WhenAll(targetPaths.Select(targetPath =>
 				Task.Run(() => File.Copy(targetPath, Path.Combine(outputFolder, Path.GetFileName(targetPath)), true))));
