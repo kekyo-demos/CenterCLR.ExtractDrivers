@@ -38,7 +38,7 @@ namespace CenterCLR.ExtractDrivers
 {
 	internal sealed class Program
 	{
-		private static async Task ExtractDriverFilesAsync(string infFilePath, string outputFolderPath, Dictionary<string, List<FileInfo>> filesIndex, TextWriter outputMessage)
+		private static async Task<string> ExtractDriverFilesAsync(string infFilePath, string outputFolderPath, Dictionary<string, List<FileInfo>> filesIndex, TextWriter outputMessage)
 		{
 			var sections = new Dictionary<string, List<KeyValuePair<string, string>>>(StringComparer.InvariantCultureIgnoreCase);
 
@@ -51,12 +51,12 @@ namespace CenterCLR.ExtractDrivers
 			var versionKeyValues = sections.GetCollection("Version");
 			if (versionKeyValues.Any() == false)
 			{
-				return;
+				return null;
 			}
 
 			var catalogFileInfos =
 				from entry in versionKeyValues
-				where entry.Key.StartsWith("CatalogFile")
+				where entry.Key.StartsWith("CatalogFile", StringComparison.InvariantCultureIgnoreCase)
 				from catalogFileInfo in filesIndex.GetCollection(entry.Value)
 				select Tuple.Create(catalogFileInfo, catalogFileInfo.Name);
 
@@ -68,7 +68,9 @@ namespace CenterCLR.ExtractDrivers
 			var storeInfName = Path.GetFileNameWithoutExtension(
 				catalogFileInfos.Select(catalogFileInfo => catalogFileInfo.Item2).FirstOrDefault() ?? infFilePath);
 
-			var targetPaths = new[] { Tuple.Create(new FileInfo(infFilePath), storeInfName + ".inf") }.
+			var storeInfFileName = storeInfName + ".inf";
+
+			var targetPaths = new[] { Tuple.Create(new FileInfo(infFilePath), storeInfFileName) }.
 				Concat(catalogFileInfos.Concat(sourceDisksFileInfos)).
 				Distinct(FileEntryEqualityComparer.Instance).
 				ToList();
@@ -88,6 +90,31 @@ namespace CenterCLR.ExtractDrivers
 			await Task.WhenAll(
 				targetPaths.Select(entry =>
 					Utilities.CopyFileAsync(entry.Item1.FullName, Path.Combine(infFolderPath, entry.Item2))));
+
+			return Path.Combine(infFolderPath, storeInfFileName);
+		}
+
+		private static async Task WriteDismScriptAsync(string outputFolderPath, IEnumerable<string> infPaths)
+		{
+			using (var stream = new FileStream(
+				Path.Combine(outputFolderPath, "template.bat"),
+				FileMode.Create,
+				FileAccess.ReadWrite,
+				FileShare.ReadWrite,
+				65536,
+				FileOptions.SequentialScan))
+			{
+				var tw = new StreamWriter(stream, Encoding.Default);
+				await tw.WriteLineAsync(@"set MountFolderPath=C:\mount\windows");
+
+				foreach (var infPath in infPaths)
+				{
+					await tw.WriteLineAsync(string.Format("dism.exe /Add-Driver /Image:\"%%MountFolderPath%%\" /Driver:\"{0}\"", infPath));
+				}
+
+				await tw.FlushAsync();
+				await stream.FlushAsync();
+			}
 		}
 
 		static int Main(string[] args)
@@ -119,6 +146,13 @@ namespace CenterCLR.ExtractDrivers
 				var driverBaseFolderPath = "System32";
 				var infFolderPath = "Inf";
 
+				Console.WriteLine("Pickup Windows folder path: {0}", windowsPath);
+				Console.WriteLine("Inf file search pattern: {0}", searchPattern);
+				Console.WriteLine("Output folder path: {0}", outputFolderPath);
+				Console.WriteLine();
+
+				Console.WriteLine("Step1: Indexing system files ...");
+
 				var infFolder = new DirectoryInfo(Path.Combine(windowsPath, driverBaseFolderPath));
 
 				var filesIndex =
@@ -127,21 +161,30 @@ namespace CenterCLR.ExtractDrivers
 					GroupBy(fileInfo => fileInfo.Name).
 					ToDictionary(g => g.Key, g => g.ToList());
 
-				Console.WriteLine("Step1: Indexed system files (Files={0})", filesIndex.Count);
+				Console.WriteLine("Step1: Done. (Files={0})", filesIndex.Count);
 
 				if (Directory.Exists(outputFolderPath) == false)
 				{
 					Directory.CreateDirectory(outputFolderPath);
 				}
 
-				Console.WriteLine("Step2: Begin extract driver files...");
+				Console.WriteLine("Step2: Begin extract driver files ...");
 
-				Task.WhenAll(
+				var storeInfFilePaths = Task.WhenAll(
 					Directory.EnumerateFiles(Path.Combine(windowsPath, infFolderPath), searchPattern, SearchOption.TopDirectoryOnly).
 					Select(path => ExtractDriverFilesAsync(path, outputFolderPath, filesIndex, Console.Out))).
+					Result.
+					Where(storeInfFilePath => storeInfFilePath != null).
+					ToList();
+
+				Console.WriteLine("Step2: Done. (Stored={0})", storeInfFilePaths.Count);
+
+				Console.WriteLine("Step3: Output optional dism script ...");
+
+				WriteDismScriptAsync(outputFolderPath, storeInfFilePaths).
 					Wait();
 
-				Console.WriteLine("Step2: Done.");
+				Console.WriteLine("Step3: Done.");
 			}
 			catch (Exception ex)
 			{
