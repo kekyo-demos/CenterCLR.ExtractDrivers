@@ -31,7 +31,7 @@ using System.IO;
 
 namespace CenterCLR.ExtractDrivers
 {
-	internal sealed class FileEntryEqualityComparer : IEqualityComparer<Tuple<FileInfo, string>>
+	internal sealed class FileEntryEqualityComparer : IEqualityComparer<Tuple<FileInfo, string, string>>
 	{
 		public static readonly FileEntryEqualityComparer Instance = new FileEntryEqualityComparer();
 
@@ -39,18 +39,14 @@ namespace CenterCLR.ExtractDrivers
 		{
 		}
 
-		public bool Equals(Tuple<FileInfo, string> x, Tuple<FileInfo, string> y)
+		public bool Equals(Tuple<FileInfo, string, string> x, Tuple<FileInfo, string, string> y)
 		{
-			return
-//				x.Item1.FullName.Equals(y.Item1.FullName, StringComparison.InvariantCultureIgnoreCase) &&
-				x.Item2.Equals(y.Item2, StringComparison.InvariantCultureIgnoreCase);
+			return x.Item1.Name.Equals(y.Item1.Name, StringComparison.InvariantCultureIgnoreCase);
 		}
 
-		public int GetHashCode(Tuple<FileInfo, string> obj)
+		public int GetHashCode(Tuple<FileInfo, string, string> obj)
 		{
-			return
-//				obj.Item1.GetHashCode() ^
-				obj.Item2.GetHashCode();
+			return obj.Item1.Name.ToLowerInvariant().GetHashCode();
 		}
 	}
 }

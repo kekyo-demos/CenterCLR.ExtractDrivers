@@ -62,31 +62,34 @@ namespace CenterCLR.ExtractDrivers
 				from entry in versionKeyValues
 				where entry.Key.StartsWith("CatalogFile", StringComparison.InvariantCultureIgnoreCase)
 				from catalogFileInfo in filesIndex.GetCollection(entry.Value)
-				select Tuple.Create(catalogFileInfo, catalogFileInfo.Name);
+				select Tuple.Create(catalogFileInfo, ".", catalogFileInfo.Name);
+
+			var sourceDisksFileInfos =
+				from section in sections
+				where section.Key.StartsWith("SourceDisksFiles", StringComparison.InvariantCultureIgnoreCase)
+				from entry in section.Value
+				let relativePath = entry.Value.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Skip(1).FirstOrDefault() ?? "."
+				from sourceDisksFileInfo in filesIndex.GetCollection(entry.Key)
+				select Tuple.Create(sourceDisksFileInfo, relativePath, sourceDisksFileInfo.Name);
 
 			var copyFileInfos =
-				from section in sections.Values
-				from entry in section
+				from keyValues in sections.Values
+				from entry in keyValues
 				where entry.Key.Equals("CopyFiles", StringComparison.InvariantCultureIgnoreCase)
 				from copySectionName in entry.Value.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(cs => cs.Trim())
 				from entry2 in sections.GetCollection(copySectionName)
 				from copyFile in filesIndex.GetCollection(entry2.Key)
-				select Tuple.Create(copyFile, copyFile.Name);
-
-			var sourceDisksFileInfos =
-				from entry in sections.GetCollection("SourceDisksFiles")
-				from sourceDisksFileInfo in filesIndex.GetCollection(entry.Key)
-				select Tuple.Create(sourceDisksFileInfo, sourceDisksFileInfo.Name);
+				select Tuple.Create(copyFile, ".", copyFile.Name);
 
 			var storeInfName = Path.GetFileNameWithoutExtension(
-				catalogFileInfos.Select(catalogFileInfo => catalogFileInfo.Item2).FirstOrDefault() ?? infFilePath);
+				catalogFileInfos.Select(catalogFileInfo => catalogFileInfo.Item3).FirstOrDefault() ?? infFilePath);
 
 			var storeInfFileName = storeInfName + ".inf";
 
-			var targetEntries = new[] { Tuple.Create(new FileInfo(infFilePath), storeInfFileName) }.
+			var targetEntries = new[] { Tuple.Create(new FileInfo(infFilePath), ".", storeInfFileName) }.
 				Concat(catalogFileInfos).
-				Concat(copyFileInfos).
 				Concat(sourceDisksFileInfos).
+				Concat(copyFileInfos).
 				Distinct(FileEntryEqualityComparer.Instance).
 				ToList();
 
@@ -105,7 +108,7 @@ namespace CenterCLR.ExtractDrivers
 
 			await Task.WhenAll(
 				targetEntries.Select(entry =>
-					Utilities.CopyFileAsync(entry.Item1.FullName, Path.Combine(infFolderPath, entry.Item2))));
+					Utilities.CopyFileAsync(entry.Item1.FullName, Path.Combine(infFolderPath, entry.Item2, entry.Item3))));
 
 			return Path.Combine(infFolderPath, storeInfFileName);
 		}

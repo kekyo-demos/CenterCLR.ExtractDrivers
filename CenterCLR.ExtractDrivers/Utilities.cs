@@ -151,6 +151,12 @@ namespace CenterCLR.ExtractDrivers
 				65536,
 				FileOptions.SequentialScan | FileOptions.Asynchronous))
 			{
+				var folderPath = Path.GetDirectoryName(destinationPath);
+				if (Directory.Exists(folderPath) == false)
+				{
+					Directory.CreateDirectory(folderPath);
+				}
+
 				using (var destinationStream = new FileStream(
 					destinationPath,
 					FileMode.Create,
