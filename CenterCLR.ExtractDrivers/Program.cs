@@ -68,7 +68,8 @@ namespace CenterCLR.ExtractDrivers
 				from section in sections.Values
 				from entry in section
 				where entry.Key.Equals("CopyFiles", StringComparison.InvariantCultureIgnoreCase)
-				from entry2 in sections.GetCollection(entry.Value)
+				from copySectionName in entry.Value.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(cs => cs.Trim())
+				from entry2 in sections.GetCollection(copySectionName)
 				from copyFile in filesIndex.GetCollection(entry2.Key)
 				select Tuple.Create(copyFile, copyFile.Name);
 
