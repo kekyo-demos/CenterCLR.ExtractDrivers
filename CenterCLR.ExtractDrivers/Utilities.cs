@@ -94,18 +94,13 @@ namespace CenterCLR.ExtractDrivers
 				}
 
 				var equalIndex = sanitized.IndexOf('=');
-				if (equalIndex == -1)
-				{
-					continue;
-				}
-
-				var keyName = sanitized.Substring(0, equalIndex).Trim();
+				var keyName = (equalIndex >= 0) ? sanitized.Substring(0, equalIndex).Trim() : sanitized;
 				if (String.IsNullOrWhiteSpace(keyName) == true)
 				{
 					continue;
 				}
 
-				var value = sanitized.Substring(equalIndex + 1).Trim();
+				var value = (equalIndex >= 0) ? sanitized.Substring(equalIndex + 1).Trim() : null;
 				currentKeyValues.Add(new KeyValuePair<string, string>(keyName, value));
 			}
 		}

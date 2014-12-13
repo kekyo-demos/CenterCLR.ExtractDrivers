@@ -42,13 +42,15 @@ namespace CenterCLR.ExtractDrivers
 		public bool Equals(Tuple<FileInfo, string> x, Tuple<FileInfo, string> y)
 		{
 			return
-				x.Item1.FullName.Equals(y.Item1.FullName, StringComparison.InvariantCultureIgnoreCase) &&
+//				x.Item1.FullName.Equals(y.Item1.FullName, StringComparison.InvariantCultureIgnoreCase) &&
 				x.Item2.Equals(y.Item2, StringComparison.InvariantCultureIgnoreCase);
 		}
 
 		public int GetHashCode(Tuple<FileInfo, string> obj)
 		{
-			return obj.Item1.GetHashCode() ^ obj.Item2.GetHashCode();
+			return
+//				obj.Item1.GetHashCode() ^
+				obj.Item2.GetHashCode();
 		}
 	}
 }

@@ -38,7 +38,11 @@ namespace CenterCLR.ExtractDrivers
 {
 	internal sealed class Program
 	{
-		private static async Task<string> ExtractDriverFilesAsync(string infFilePath, string outputFolderPath, Dictionary<string, List<FileInfo>> filesIndex, TextWriter outputMessage)
+		private static async Task<string> ExtractDriverFilesAsync(
+			string infFilePath,
+			string outputFolderPath,
+			Dictionary<string, List<FileInfo>> filesIndex,
+			TextWriter outputMessage)
 		{
 			var sections = new Dictionary<string, List<KeyValuePair<string, string>>>(StringComparer.InvariantCultureIgnoreCase);
 
@@ -60,6 +64,14 @@ namespace CenterCLR.ExtractDrivers
 				from catalogFileInfo in filesIndex.GetCollection(entry.Value)
 				select Tuple.Create(catalogFileInfo, catalogFileInfo.Name);
 
+			var copyFileInfos =
+				from section in sections.Values
+				from entry in section
+				where entry.Key.Equals("CopyFiles", StringComparison.InvariantCultureIgnoreCase)
+				from entry2 in sections.GetCollection(entry.Value)
+				from copyFile in filesIndex.GetCollection(entry2.Key)
+				select Tuple.Create(copyFile, copyFile.Name);
+
 			var sourceDisksFileInfos =
 				from entry in sections.GetCollection("SourceDisksFiles")
 				from sourceDisksFileInfo in filesIndex.GetCollection(entry.Key)
@@ -70,16 +82,19 @@ namespace CenterCLR.ExtractDrivers
 
 			var storeInfFileName = storeInfName + ".inf";
 
-			var targetPaths = new[] { Tuple.Create(new FileInfo(infFilePath), storeInfFileName) }.
-				Concat(catalogFileInfos.Concat(sourceDisksFileInfos)).
+			var targetEntries = new[] { Tuple.Create(new FileInfo(infFilePath), storeInfFileName) }.
+				Concat(catalogFileInfos).
+				Concat(copyFileInfos).
+				Concat(sourceDisksFileInfos).
 				Distinct(FileEntryEqualityComparer.Instance).
 				ToList();
 
 			await outputMessage.WriteLineAsync(string.Format(
-				"  Target: {0} ({1}, Files={2})",
+				"  Target: {0} [{1}] (Files={2})",
 				infFilePath,
 				storeInfName,
-				targetPaths.Count));
+				targetEntries.Count));
+//				string.Join(",", targetEntries.Select(entry => entry.Item2))));
 
 			var infFolderPath = Path.Combine(outputFolderPath, storeInfName);
 			if (Directory.Exists(infFolderPath) == false)
@@ -88,13 +103,15 @@ namespace CenterCLR.ExtractDrivers
 			}
 
 			await Task.WhenAll(
-				targetPaths.Select(entry =>
+				targetEntries.Select(entry =>
 					Utilities.CopyFileAsync(entry.Item1.FullName, Path.Combine(infFolderPath, entry.Item2))));
 
 			return Path.Combine(infFolderPath, storeInfFileName);
 		}
 
-		private static async Task WriteDismScriptAsync(string outputFolderPath, IEnumerable<string> infPaths)
+		private static async Task WriteDismScriptAsync(
+			string outputFolderPath,
+			IEnumerable<string> infPaths)
 		{
 			using (var stream = new FileStream(
 				Path.Combine(outputFolderPath, "template.bat"),
