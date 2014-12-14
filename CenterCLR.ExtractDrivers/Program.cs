@@ -126,11 +126,11 @@ namespace CenterCLR.ExtractDrivers
 				FileOptions.SequentialScan))
 			{
 				var tw = new StreamWriter(stream, Encoding.Default);
-				await tw.WriteLineAsync(@"set MountFolderPath=C:\mount\windows");
+				await tw.WriteLineAsync(@"rem set MountFolderPath=C:\mount\windows");
 
 				foreach (var infPath in infPaths)
 				{
-					await tw.WriteLineAsync(string.Format("dism.exe /Add-Driver /Image:\"%%MountFolderPath%%\" /Driver:\"{0}\"", infPath));
+					await tw.WriteLineAsync(string.Format("dism.exe /Add-Driver /Image:\"%MountFolderPath%\" /Driver:\"{0}\"", infPath));
 				}
 
 				await tw.FlushAsync();
