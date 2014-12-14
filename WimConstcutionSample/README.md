@@ -16,6 +16,9 @@
 * Mount Hyper-V guest OS image (*.vhdx).
 * Run "CenterCLR.ExtractDrivers.exe".
  * Extract drivers and generate dism script (template.bat) from vdhx image.
+
+![Extracted drivers.](https://raw.githubusercontent.com/kekyo/CenterCLR.ExtractDrivers/master/WimConstcutionSample/extracted.png)
+
 * Run make_master.bat
  * Caution: You must customize same path in script.
  * Caution: Dism script replace with template.bat.
