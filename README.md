@@ -16,16 +16,17 @@
  * Vhdx'ed image mount working machine.
 * Run cmd.exe in administrative.
 * Run CenterCLR.ExtractDrivers.exe
- ```
+
+```
 CenterCLR.ExtractDrivers.exe D:\Images\x89win_windows\Windows
- ```
+```
+
 * Done extract drivers!
- * Drivers stored to "DriverStore" sub folders.
- * Extract from "D:\Images\x89win_windows\Windows", this folder must contains "installed Windows" folder.
-  * Copied from a real system.
-  * Mounted from Vhdx.
-  * Mounted from dism.
-  * Referenced from real system via network.
+* Drivers stored to "DriverStore" sub folders.
+* Extract from "D:\Images\x89win_windows\Windows", this folder must contains "installed Windows" folder.
+ * Mounted from Vhdx.
+ * Mounted from dism.
+ * Referenced from real system via network.
 
 * Embedded help:
 ```
