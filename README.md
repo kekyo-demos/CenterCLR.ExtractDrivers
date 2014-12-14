@@ -7,7 +7,7 @@
  * Simple command line tool.
  * Automatically parse windows driver information files (*.inf), calculate require additional driver files.
  * Copy out from installed files to local folders.
- * Auto generate dism.exe sample script (You use create WIMBoot-able operation).
+ * Auto generate dism.exe sample script (You can use WIMBoot-able operation).
 
 ## Example: Windows 8.1 with WIMBoot installation in small resource system.
  * Extract driver, and apply plane windows 8.1 japanese system (Teclast X89win), Office 2013 (WXPOO), Visual Studio 2013 Update4, JetBrains Resharper 9 Ultimate, IN eMMC 32GB STORAGE, CURRENT FREE SPACE IS 10GB over!!

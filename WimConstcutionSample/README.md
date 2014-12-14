@@ -33,3 +33,6 @@
 * e:
 * Execute "make_target.bat".
 * Reboot.
+
+![Teclast X89win is great 7.9 inch tablet PC with retina resolution (2048x1536).](https://raw.githubusercontent.com/kekyo/CenterCLR.ExtractDrivers/master/WimConstcutionSample/x89win_real.png)
+
