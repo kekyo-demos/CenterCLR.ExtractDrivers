@@ -19,6 +19,9 @@
 * Run make_master.bat
  * Caution: You must customize same path in script.
  * Caution: Dism script replace with template.bat.
+
+![Applying drivers with dism.](https://raw.githubusercontent.com/kekyo/CenterCLR.ExtractDrivers/master/WimConstcutionSample/dism-add-driver.png)
+
 * Finally, "install.wim" is constructed.
 
 ## Boot target from Windows 8.1 Master DVD
