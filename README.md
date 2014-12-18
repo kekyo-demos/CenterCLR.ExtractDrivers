@@ -10,7 +10,7 @@
  * Auto generate dism.exe sample script (You can use WIMBoot-able operation).
 
 ## Example: Windows 8.1 with WIMBoot installation in small resource system.
- * Extract driver, and apply plain windows 8.1 japanese system (Teclast X89win), Office 2013 (WXPOO), Visual Studio 2013 Update4, JetBrains Resharper 9 Ultimate, IN eMMC 32GB STORAGE, CURRENT FREE SPACE IS 10GB over!!
+ * Extract driver, and apply plain windows 8.1 japanese system (Teclast X89win), Office 2013 (WXPOO), Visual Studio 2013 Update4, JetBrains Resharper 9 Ultimate, IN eMMC 32GB STORAGE, CURRENT FREE SPACE IS 10GB over!!  https://github.com/kekyo/CenterCLR.ExtractDrivers/tree/master/WimConstcutionSample
 ![Extract driver, and apply plain windows 8.1 japanese system (Teclast X89win)](https://raw.githubusercontent.com/kekyo/CenterCLR.ExtractDrivers/master/WimConstcutionSample/x89win.png)
 
 ## How to use
