@@ -34,5 +34,14 @@
 * Execute "make_target.bat".
 * Reboot.
 
+## X89win final step.
+* Run device manager.
+* Select "Detect legacy hardware" menu.
+* Add "Kionix Sensor Fusion Device".
+* Invalid tilt sensor direction, Execute kxfusion.reg, and reboot.
+
 ![Teclast X89win is great 7.9 inch tablet PC with retina resolution (2048x1536).](https://raw.githubusercontent.com/kekyo/CenterCLR.ExtractDrivers/master/WimConstcutionSample/x89win_real.png)
+
+![Device manager part1](https://raw.githubusercontent.com/kekyo/CenterCLR.ExtractDrivers/master/WimConstcutionSample/devices1.png)
+![Device manager part2](https://raw.githubusercontent.com/kekyo/CenterCLR.ExtractDrivers/master/WimConstcutionSample/devices2.png)
 
